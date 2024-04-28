@@ -29,10 +29,10 @@ const links = [
  * 第一次點選會load一次，之後就不會一直full page refreshing
  */
 export default function NavLinks() {
+  const pathname = usePathname();
   return (
     <>
       {links.map((link) => {
-        const pathname = usePathname();
         const LinkIcon = link.icon;
         return (
           <Link
