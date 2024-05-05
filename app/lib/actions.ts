@@ -25,18 +25,23 @@ const FormSchema = z.object({
 const CreateInvoice = FormSchema.omit({ id: true, date: true });
 
 export async function createInvoice(formData: FormData) {
+  // 1.validate data
   const { customerId, amount, status } = CreateInvoice.parse({
     customerId: formData.get('customerId'), // 看name 不是id
     amount: formData.get('amount'),
     status: formData.get('status'),
   });
+  // 2. transform
   const amountInCents = amount * 100;
   const date = new Date().toISOString().split('T')[0];
 
+  // 3. setting database
   await sql`
   INSERT INTO invoices (customer_id, amount, status, date)
   VALUES (${customerId},${amountInCents},${status},${date})
   `;
+
+  // 4. remove cache, redirect to orignal page
 
   // clear thos cache and trigger a new request to the server
   revalidatePath('/dashboard/invoices');
@@ -64,4 +69,17 @@ export async function updateInvoice(id: string, formData: FormData) {
 
   revalidatePath('/dashboard/invoices');
   redirect('/dashboard/invoices');
+}
+
+export async function deleteInvoice(id: string) {
+  await sql`
+  DELETE FROM invoices WHERE id = ${id}
+  `;
+  /* Since this action is being called in /dashboard/invoices path,
+   you don't need to call redirect.
+
+   Calling revalidatePath will trigger a new server request and re-render the table
+   */
+
+  revalidatePath('/dashboard/invoices');
 }
